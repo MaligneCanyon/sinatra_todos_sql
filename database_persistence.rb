@@ -11,7 +11,12 @@ class DatabasePersistence # @storage is an instance of this class
   # end
   def initialize(logger)
     # create a connection to the db # should use PG::Connection.new ???
-    @db = PG.connect(dbname: "todos")
+    # @db = PG.connect(dbname: "todos")
+    @db = if Sinatra::Base.production?
+            PG.connect(ENV['DATABASE_URL'])
+          else
+            PG.connect(dbname: "todos")
+          end
     @logger = logger # use the Sinatra logging routines
   end
 
@@ -115,6 +120,10 @@ class DatabasePersistence # @storage is an instance of this class
 
     sql = "UPDATE todos SET complete = true WHERE list_id = $1;"
     query(sql, list_id)
+  end
+
+  def disconnect
+    @db.close
   end
 
   private
